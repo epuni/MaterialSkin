@@ -1,5 +1,6 @@
 ﻿using System;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Drawing;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
@@ -28,7 +29,7 @@ namespace MaterialSkin.Controls
             OwnerDraw = true;
             ResizeRedraw = true;
             BorderStyle = BorderStyle.None;
-            SetStyle(ControlStyles.DoubleBuffer | ControlStyles.OptimizedDoubleBuffer, true);
+            SetStyle(ControlStyles.DoubleBuffer | ControlStyles.OptimizedDoubleBuffer | ControlStyles.AllPaintingInWmPaint, true);
 
             //Fix for hovers, by default it doesn't redraw
             //TODO: should only redraw when the hovered line changed, this to reduce unnecessary redraws
@@ -43,20 +44,22 @@ namespace MaterialSkin.Controls
                 MouseState = MouseState.OUT;
                 MouseLocation = new Point(-1, -1);
                 HoveredItem = null;
-                Invalidate();
+                Invalidate(Bounds);
             };
             MouseDown += delegate { MouseState = MouseState.DOWN; };
             MouseUp += delegate { MouseState = MouseState.HOVER; };
-            MouseMove += delegate (object sender, MouseEventArgs args)
-            {
-                MouseLocation = args.Location;
-                var currentHoveredItem = this.GetItemAt(MouseLocation.X, MouseLocation.Y);
-                if (HoveredItem != currentHoveredItem)
-                {
-                    HoveredItem = currentHoveredItem;
-                    Invalidate();
-                }
-            };
+            MouseMove += MouseMoved;
+            MouseWheel += MouseMoved;
+        }
+
+        private void MouseMoved(object sender, MouseEventArgs args)
+        {
+            MouseLocation = args.Location;
+            var currentHoveredItem = GetItemAt(MouseLocation.X, MouseLocation.Y);
+            if (HoveredItem == currentHoveredItem) return;
+            if (currentHoveredItem != null) Invalidate(currentHoveredItem.Bounds);
+            if (HoveredItem != null) Invalidate(HoveredItem.Bounds);
+            HoveredItem = currentHoveredItem;
         }
 
         protected override void OnDrawColumnHeader(DrawListViewColumnHeaderEventArgs e)
@@ -79,7 +82,7 @@ namespace MaterialSkin.Controls
             //always draw default background
             g.FillRectangle(new SolidBrush(SkinManager.GetApplicationBackgroundColor()), new Rectangle(new Point(e.Bounds.X, 0), e.Bounds.Size));
 
-            if (e.State.HasFlag(ListViewItemStates.Selected))
+            if (e.State.HasFlag(ListViewItemStates.Focused))
             {
                 //selected background
                 g.FillRectangle(SkinManager.GetFlatButtonPressedBackgroundBrush(), new Rectangle(new Point(e.Bounds.X, 0), e.Bounds.Size));
@@ -90,19 +93,20 @@ namespace MaterialSkin.Controls
                 g.FillRectangle(SkinManager.GetFlatButtonHoverBackgroundBrush(), new Rectangle(new Point(e.Bounds.X, 0), e.Bounds.Size));
             }
 
-
             //Draw separator
             g.DrawLine(new Pen(SkinManager.GetDividersColor()), e.Bounds.Left, 0, e.Bounds.Right, 0);
 
             foreach (ListViewItem.ListViewSubItem subItem in e.Item.SubItems)
             {
                 //Draw text
-                g.DrawString(subItem.Text, SkinManager.ROBOTO_MEDIUM_10, SkinManager.GetPrimaryTextBrush(),
-                                 new Rectangle(subItem.Bounds.X + ITEM_PADDING, ITEM_PADDING, subItem.Bounds.Width - 2 * ITEM_PADDING, subItem.Bounds.Height - 2 * ITEM_PADDING),
-                                 getStringFormat());
+                g.DrawString(subItem.Text, 
+                    SkinManager.ROBOTO_MEDIUM_10,
+                    subItem.ForeColor == SystemColors.WindowText ? SkinManager.GetPrimaryTextBrush() : new SolidBrush(subItem.ForeColor),
+                    new Rectangle(subItem.Bounds.X + ITEM_PADDING, ITEM_PADDING, subItem.Bounds.Width - 2 * ITEM_PADDING, subItem.Bounds.Height - 2 * ITEM_PADDING),
+                    getStringFormat());
             }
 
-            e.Graphics.DrawImage((Image)b.Clone(), new Point(0, e.Item.Bounds.Location.Y));
+            e.Graphics.DrawImage(b, new Point(0, e.Item.Bounds.Location.Y));
             g.Dispose();
             b.Dispose();
         }
