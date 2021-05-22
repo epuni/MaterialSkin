@@ -83,7 +83,14 @@ namespace MaterialSkin.Controls
                 ClientRectangle.Height - 1,
                 1f))
             {
-                g.FillPath(Primary ? SkinManager.ColorScheme.PrimaryBrush : SkinManager.GetRaisedButtonBackgroundBrush(), backgroundPath);
+                Brush c;
+
+                if (Primary)
+                    c = Focused ? SkinManager.ColorScheme.LightPrimaryBrush : SkinManager.ColorScheme.PrimaryBrush;
+                else
+                    c = Focused ? new SolidBrush(SkinManager.GetFlatButtonHoverBackgroundColor()) : SkinManager.GetRaisedButtonBackgroundBrush();
+
+                g.FillPath(c, backgroundPath);
             }
 
             if (_animationManager.IsAnimating())
