@@ -170,6 +170,12 @@ namespace MaterialSkin.Controls
             // dispose used paint objects
             pen.Dispose();
             brush.Dispose();
+
+            if (Focused)
+            {
+                g.DrawRectangle(SkinManager.GetFocusedPen(),
+                    new Rectangle(new Point(1, 1), ClientRectangle.Size - new Size(2, 2)));
+            }
         }
 
         private Bitmap DrawCheckMarkBitmap()

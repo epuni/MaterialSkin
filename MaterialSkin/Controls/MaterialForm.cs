@@ -165,9 +165,17 @@ namespace MaterialSkin.Controls
             // This enables the form to trigger the MouseMove event even when mouse is over another control
             Application.AddMessageFilter(new MouseMessageFilter());
             MouseMessageFilter.MouseMove += OnGlobalMouseMove;
+
+            MaterialSkinManager.Instance.AddFormToManage(this);
         }
 
-        protected override void WndProc(ref Message m)
+		protected override void OnClosed(EventArgs e)
+		{
+            MaterialSkinManager.Instance.RemoveFormToManage(this);
+            base.OnClosed(e);
+		}
+
+		protected override void WndProc(ref Message m)
         {
             base.WndProc(ref m);
             if (DesignMode || IsDisposed) return;

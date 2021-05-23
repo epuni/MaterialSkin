@@ -16,7 +16,9 @@ namespace MaterialSkin.Controls
         public MaterialSkinManager SkinManager => MaterialSkinManager.Instance;
         [Browsable(false)]
         public MouseState MouseState { get; set; }
-        public bool Primary { get; set; }
+
+        [Browsable(false)]
+        private bool Primary => true;
 
         private readonly AnimationManager _animationManager;
 
@@ -37,8 +39,6 @@ namespace MaterialSkin.Controls
 
         public MaterialRaisedButton()
         {
-            Primary = true;
-
             _animationManager = new AnimationManager(false)
             {
                 Increment = 0.03,
@@ -69,7 +69,20 @@ namespace MaterialSkin.Controls
             _animationManager.StartNewAnimation(AnimationDirection.In, mevent.Location);
         }
 
-        protected override void OnPaint(PaintEventArgs pevent)
+        public void BeginAnimation() 
+        {
+            _animationManager.StartNewAnimation(AnimationDirection.In);
+        }
+
+		protected override void OnPreviewKeyDown(PreviewKeyDownEventArgs e)
+		{
+			base.OnPreviewKeyDown(e);
+
+            if (e.KeyCode == Keys.Space || e.KeyCode == Keys.Enter)
+                BeginAnimation();
+        }
+
+		protected override void OnPaint(PaintEventArgs pevent)
         {
             var g = pevent.Graphics;
             g.SmoothingMode = SmoothingMode.AntiAlias;
@@ -83,12 +96,7 @@ namespace MaterialSkin.Controls
                 ClientRectangle.Height - 1,
                 1f))
             {
-                Brush c;
-
-                if (Primary)
-                    c = Focused ? SkinManager.ColorScheme.LightPrimaryBrush : SkinManager.ColorScheme.PrimaryBrush;
-                else
-                    c = Focused ? new SolidBrush(SkinManager.GetFlatButtonHoverBackgroundColor()) : SkinManager.GetRaisedButtonBackgroundBrush();
+                Brush c = Primary ? SkinManager.ColorScheme.PrimaryBrush : SkinManager.GetRaisedButtonBackgroundBrush();
 
                 g.FillPath(c, backgroundPath);
             }
@@ -142,6 +150,11 @@ namespace MaterialSkin.Controls
                 SkinManager.GetRaisedButtonTextBrush(Primary),
                 textRect,
                 new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center });
+
+            if (Focused)
+                g.DrawRectangle(
+                    SkinManager.GetFocusedPen(),
+                    new Rectangle(new Point(1, 1), ClientRectangle.Size - new Size(2, 2)));
         }
 
         private Size GetPreferredSize()

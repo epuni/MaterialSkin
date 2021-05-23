@@ -50,6 +50,8 @@ namespace MaterialSkin.Controls
             MouseUp += delegate { MouseState = MouseState.HOVER; };
             MouseMove += MouseMoved;
             MouseWheel += MouseMoved;
+
+            BackColor = SkinManager.GetApplicationBackgroundColor();
         }
 
         private void MouseMoved(object sender, MouseEventArgs args)

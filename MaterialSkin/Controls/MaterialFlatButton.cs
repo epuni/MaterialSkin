@@ -81,7 +81,10 @@ namespace MaterialSkin.Controls
 
             //Hover
             Color c = SkinManager.GetFlatButtonHoverBackgroundColor();
-            var alpha = Focused ? 255 : (int)(_hoverAnimationManager.GetProgress() * c.A);
+            
+            var alpha = (byte)(_hoverAnimationManager.GetProgress() * c.A);
+            if (alpha < 20) alpha = 20;
+            
             using (Brush b = new SolidBrush(Color.FromArgb(alpha, c.RemoveAlpha())))
                 g.FillRectangle(b, ClientRectangle);
 
@@ -141,6 +144,9 @@ namespace MaterialSkin.Controls
                 textRect,
                 new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center }
                 );
+
+            if (Focused)
+                g.DrawRectangle(SkinManager.GetFocusedPen(), new Rectangle(new Point(1, 1), ClientRectangle.Size - new Size(2, 2)));
         }
 
         private Size GetPreferredSize()
@@ -159,6 +165,12 @@ namespace MaterialSkin.Controls
                 extra += 24 + 4;
 
             return new Size((int)Math.Ceiling(_textSize.Width) + extra, 36);
+        }
+
+        public void BeginAnimation() 
+        {
+            _animationManager.StartNewAnimation(AnimationDirection.In);
+            Invalidate();
         }
 
         protected override void OnCreateControl()
@@ -194,6 +206,13 @@ namespace MaterialSkin.Controls
                 MouseState = MouseState.HOVER;
 
                 Invalidate();
+            };
+            PreviewKeyDown += (sender, args) =>
+            {
+                if (args.KeyCode == Keys.Space || args.KeyCode == Keys.Enter)
+                {
+                    BeginAnimation();
+                }
             };
         }
     }
