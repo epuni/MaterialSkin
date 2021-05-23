@@ -44,7 +44,7 @@ namespace MaterialSkin.Controls
                 MouseState = MouseState.OUT;
                 MouseLocation = new Point(-1, -1);
                 HoveredItem = null;
-                Invalidate(Bounds);
+                Invalidate();
             };
             MouseDown += delegate { MouseState = MouseState.DOWN; };
             MouseUp += delegate { MouseState = MouseState.HOVER; };
@@ -80,14 +80,15 @@ namespace MaterialSkin.Controls
             var g = Graphics.FromImage(b);
 
             //always draw default background
-            g.FillRectangle(new SolidBrush(SkinManager.GetApplicationBackgroundColor()), new Rectangle(new Point(e.Bounds.X, 0), e.Bounds.Size));
+            using (var bg = new SolidBrush(SkinManager.GetApplicationBackgroundColor()))
+                g.FillRectangle(bg, new Rectangle(new Point(e.Bounds.X, 0), e.Bounds.Size));
 
-            if (e.State.HasFlag(ListViewItemStates.Focused))
+            if (e.Item.Selected)
             {
                 //selected background
-                g.FillRectangle(SkinManager.GetFlatButtonPressedBackgroundBrush(), new Rectangle(new Point(e.Bounds.X, 0), e.Bounds.Size));
+                g.FillRectangle(Focused ? SkinManager.GetFlatButtonPressedBackgroundBrush() : SkinManager.GetFlatButtonHoverBackgroundBrush(), new Rectangle(new Point(e.Bounds.X, 0), e.Bounds.Size));
             }
-            else if (e.Bounds.Contains(MouseLocation) && MouseState == MouseState.HOVER)
+            else if (MouseState == MouseState.HOVER && e.Bounds.Contains(MouseLocation))
             {
                 //hover background
                 g.FillRectangle(SkinManager.GetFlatButtonHoverBackgroundBrush(), new Rectangle(new Point(e.Bounds.X, 0), e.Bounds.Size));
