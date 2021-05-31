@@ -12,6 +12,8 @@ namespace MaterialSkin
 {
     public class MaterialSkinManager
     {
+        public static bool IsMono { get; private set; } = Type.GetType("Mono.Runtime") != null;
+
         //Singleton instance
         private static MaterialSkinManager _instance;
 
@@ -287,8 +289,11 @@ namespace MaterialSkin
             IntPtr fontPtr = Marshal.AllocCoTaskMem(dataLength);
             Marshal.Copy(fontResource, 0, fontPtr, dataLength);
 
-            uint cFonts = 0;
-            AddFontMemResourceEx(fontPtr, (uint)fontResource.Length, IntPtr.Zero, ref cFonts);
+            if (!IsMono)
+            {
+                uint cFonts = 0;
+                AddFontMemResourceEx(fontPtr, (uint)fontResource.Length, IntPtr.Zero, ref cFonts);
+            }
             privateFontCollection.AddMemoryFont(fontPtr, dataLength);
 
             return privateFontCollection.Families.Last();
@@ -312,7 +317,7 @@ namespace MaterialSkin
             foreach (ToolStripItem control in toolStrip.Items)
             {
                 control.BackColor = newBackColor;
-                if (control is MaterialToolStripMenuItem && (control as MaterialToolStripMenuItem).HasDropDown)
+                if (control is MaterialToolStripMenuItem && (control as MaterialToolStripMenuItem).DropDown != null)
                 {
 
                     //recursive call

@@ -78,8 +78,8 @@ namespace MaterialSkin.Controls
             {HTBOTTOMRIGHT, WMSZ_BOTTOMRIGHT}
         };
 
-        private const int STATUS_BAR_BUTTON_WIDTH = STATUS_BAR_HEIGHT;
-        private const int STATUS_BAR_HEIGHT = 24;
+        private int STATUS_BAR_BUTTON_WIDTH => STATUS_BAR_HEIGHT;
+        private int STATUS_BAR_HEIGHT => MaterialSkinManager.IsMono ? 0 : 24;
         private const int ACTION_BAR_HEIGHT = 40;
 
         private const uint TPM_LEFTALIGN = 0x0000;
@@ -157,14 +157,17 @@ namespace MaterialSkin.Controls
 
         public MaterialForm()
         {
-            FormBorderStyle = FormBorderStyle.None;
+            FormBorderStyle = MaterialSkinManager.IsMono ? FormBorderStyle.Sizable : FormBorderStyle.None;
             Sizable = true;
             DoubleBuffered = true;
             SetStyle(ControlStyles.OptimizedDoubleBuffer | ControlStyles.ResizeRedraw, true);
 
-            // This enables the form to trigger the MouseMove event even when mouse is over another control
-            Application.AddMessageFilter(new MouseMessageFilter());
-            MouseMessageFilter.MouseMove += OnGlobalMouseMove;
+            if (!MaterialSkinManager.IsMono)
+            {
+                // This enables the form to trigger the MouseMove event even when mouse is over another control
+                Application.AddMessageFilter(new MouseMessageFilter());
+                MouseMessageFilter.MouseMove += OnGlobalMouseMove;
+            }
 
             MaterialSkinManager.Instance.AddFormToManage(this);
         }
@@ -178,7 +181,7 @@ namespace MaterialSkin.Controls
 		protected override void WndProc(ref Message m)
         {
             base.WndProc(ref m);
-            if (DesignMode || IsDisposed) return;
+            if (DesignMode || IsDisposed || MaterialSkinManager.IsMono) return;
 
             if (m.Msg == WM_LBUTTONDBLCLK)
             {
@@ -271,18 +274,23 @@ namespace MaterialSkin.Controls
 
         protected override void OnMouseDown(MouseEventArgs e)
         {
-            if (DesignMode) return;
-            UpdateButtons(e);
+            if (MaterialSkinManager.IsMono)
+                base.OnMouseDown(e);
+            else
+            {
+                if (DesignMode) return;
+                UpdateButtons(e);
 
-            if (e.Button == MouseButtons.Left && !_maximized)
-                ResizeForm(_resizeDir);
-            base.OnMouseDown(e);
+                if (e.Button == MouseButtons.Left && !_maximized)
+                    ResizeForm(_resizeDir);
+                base.OnMouseDown(e);
+            }
         }
 
         protected override void OnMouseLeave(EventArgs e)
         {
             base.OnMouseLeave(e);
-            if (DesignMode) return;
+            if (DesignMode || MaterialSkinManager.IsMono) return;
             _buttonState = ButtonState.None;
             Invalidate();
         }
@@ -291,7 +299,7 @@ namespace MaterialSkin.Controls
         {
             base.OnMouseMove(e);
 
-            if (DesignMode) return;
+            if (DesignMode || MaterialSkinManager.IsMono) return;
 
             if (Sizable)
             {
@@ -430,11 +438,16 @@ namespace MaterialSkin.Controls
 
         protected override void OnMouseUp(MouseEventArgs e)
         {
-            if (DesignMode) return;
-            UpdateButtons(e, true);
+            if (MaterialSkinManager.IsMono)
+                base.OnMouseUp(e);
+            else
+            {
+                if (DesignMode) return;
+                UpdateButtons(e, true);
 
-            base.OnMouseUp(e);
-            ReleaseCapture();
+                base.OnMouseUp(e);
+                ReleaseCapture();
+            }
         }
 
         private void ResizeForm(ResizeDirection direction)

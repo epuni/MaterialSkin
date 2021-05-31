@@ -149,6 +149,9 @@ namespace MaterialSkin.Controls
         {
             base.OnCreateControl();
 
+            if (MaterialSkinManager.IsMono)
+                return;
+
             // This hack tries to apply the Roboto (24) font to all ListViewItems in this ListView
             // It only succeeds if the font is installed on the system.
             // Otherwise, a default sans serif font is used.
